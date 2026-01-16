@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Tatlight - Digital Universe",
+  "description": "A premium digital content marketplace for Ebooks, Instrumentals, Templates, and Courses, featuring the mystical AI assistant De-tatchegnon.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
