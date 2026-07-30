@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
+}
+
+@layer utilities {
+  .text-gold {
+    color: #D4AF37;
+  }
+  
+  .bg-gold {
+    background-color: #D4AF37;
+  }
+  
+  .border-gold {
+    border-color: #D4AF37;
+  }
+  
+  .bg-night {
+    background-color: #0D1B2A;
+  }
+  
+  .bg-light-card {
+    background-color: #F8F6F0;
+  }
+  
+  .text-night {
+    color: #0D1B2A;
+  }
+  
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+  
+  .glow-gold-strong {
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+  }
+
+  .glow-gold-subtle {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+  }
+}

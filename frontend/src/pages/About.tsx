@@ -1,0 +1,90 @@
+/// Page "À propos" de Tatlight
+
+
+export default function About() {
+  return (
+    <div className="min-h-screen py-20 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold mb-4" style={{ color: '#2d5a52' }}>
+            À propos de Tatlight
+          </h1>
+          <p className="text-xl text-gray-900">Illuminez votre chemin vers l'excellence</p>
+        </div>
+
+        <div className="space-y-12">
+          <section className="bg-white rounded-2xl p-8 border border-[#D4AF37]/20 shadow">
+            <h2 className="text-3xl font-bold mb-4 text-[#2d5a52]">Notre Mission</h2>
+            <p className="text-gray-700 leading-relaxed">
+              Tatlight est né d'une vision : démocratiser l'accès aux contenus digitaux de qualité premium. 
+              Nous croyons que chaque personne mérite d'avoir accès aux outils et connaissances nécessaires 
+              pour élever son potentiel créatif et professionnel.
+            </p>
+          </section>
+
+          <section className="bg-white rounded-2xl p-8 border border-[#D4AF37]/20 shadow">
+            <h2 className="text-3xl font-bold mb-4 text-[#2d5a52]">Nos Valeurs</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#D4AF37] to-[#B8941F] rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-[#0D1B2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-gray-900 font-bold mb-2">Qualité</h3>
+                <p className="text-sm text-gray-400">Contenus vérifiés et premium</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#D4AF37] to-[#B8941F] rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-[#0D1B2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-gray-900 font-bold mb-2">Innovation</h3>
+                <p className="text-sm text-gray-400">Toujours à la pointe</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#D4AF37] to-[#B8941F] rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-[#0D1B2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-gray-900 font-bold mb-2">Communauté</h3>
+                <p className="text-sm text-gray-400">Ensemble vers le succès</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-2xl p-8 border border-[#D4AF37]/20 shadow">
+            <h2 className="text-3xl font-bold mb-4 text-[#2d5a52]">Contactez-nous</h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8941F] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#0D1B2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-gray-900 font-semibold">Email</p>
+                  <p className="text-gray-400">contact@tatlight.com</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8941F] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#0D1B2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-gray-900 font-semibold">Adresse</p>
+                  <p className="text-gray-400">Paris, France</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}
