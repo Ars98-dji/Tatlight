@@ -9,6 +9,7 @@ urlpatterns = [
     path('confirm-payment/', views.ConfirmPaymentView.as_view(), name='order-confirm-payment'),
     path('guest-checkout/', views.GuestCheckoutView.as_view(), name='guest-checkout'),
     path('purchases/', views.user_purchases, name='user-purchases'),
+    path('purchases/<uuid:product_id>/download/', views.ProductDownloadView.as_view(), name='product-download'),
     path('stripe-webhook/', views.stripe_webhook, name='stripe-webhook'),
     path('coupons/', views.CouponListView.as_view(), name='coupon-list'),
     path('coupons/validate/', views.CouponValidateView.as_view(), name='coupon-validate'),

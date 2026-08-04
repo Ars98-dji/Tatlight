@@ -10,6 +10,13 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 # Configuration de la documentation API (Swagger)
+# Réservée aux staff en production pour ne pas exposer la surface API
+_swagger_permissions = (
+    permissions.AllowAny,
+) if settings.DEBUG else (
+    permissions.IsAdminUser,
+)
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Tatlight API",
@@ -20,7 +27,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="BSD License"),
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=_swagger_permissions,
 )
 
 urlpatterns = [

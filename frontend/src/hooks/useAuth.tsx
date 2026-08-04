@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { authService } from '../services/api';
+import { authService, tokenStorage } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
@@ -19,7 +19,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
@@ -41,23 +41,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadUser = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = tokenStorage.get('access_token');
       if (token) {
         const data = await authService.getProfile();
         setUser(data);
       }
     } catch (error) {
       console.error('Erreur lors du chargement de l\'utilisateur:', error);
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      tokenStorage.remove('access_token');
+      tokenStorage.remove('refresh_token');
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, remember?: boolean) => {
     try {
-      const data = await authService.login(email, password);
+      const data = await authService.login(email, password, remember);
       setUser(data.user);
       if (data.user.is_staff || data.user.is_superuser) {
         navigate('/admin');
@@ -71,9 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (data: any) => {
     try {
-      const response = await authService.register(data);
-      setUser(response.user);
-      navigate('/espace-utilisateur');
+      await authService.register(data);
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Erreur d\'inscription');
     }

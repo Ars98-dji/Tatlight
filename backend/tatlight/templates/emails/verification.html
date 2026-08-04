@@ -1,0 +1,18 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<p>Bonjour {{ user.first_name|default:user.email }},</p>
+
+<p>Merci de vous être inscrit sur <strong>Tatlight</strong>.</p>
+
+<p>Veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous :</p>
+
+<p style="text-align:center;">
+    <a class="button" href="{{ verify_link }}">Vérifier mon adresse email</a>
+</p>
+
+<p class="muted">Ce lien est valable pendant 24 heures.</p>
+
+<p>Si vous n'êtes pas à l'origine de cette inscription, ignorez simplement cet email.</p>
+
+<p>L'équipe Tatlight</p>
+{% endblock %}

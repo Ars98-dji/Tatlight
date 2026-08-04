@@ -3,6 +3,27 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api'
 
+const REMEMBER_KEY = 'remember_me'
+
+// Stockage des tokens : localStorage si "Se souvenir de moi", sinon sessionStorage
+export const tokenStorage = {
+  get(key: string): string | null {
+    return localStorage.getItem(key) || sessionStorage.getItem(key)
+  },
+  set(key: string, value: string, remember?: boolean) {
+    const persistent = remember ?? localStorage.getItem(REMEMBER_KEY) === 'true'
+    const storage = persistent ? localStorage : sessionStorage
+    storage.setItem(key, value)
+  },
+  remove(key: string) {
+    localStorage.removeItem(key)
+    sessionStorage.removeItem(key)
+  },
+  setRememberMe(remember: boolean) {
+    localStorage.setItem(REMEMBER_KEY, remember ? 'true' : 'false')
+  },
+}
+
 // Configuration d'Axios
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,7 +32,7 @@ const api = axios.create({
 // Intercepteur pour ajouter le token JWT aux requêtes
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = tokenStorage.get('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,20 +53,20 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
+        const refreshToken = tokenStorage.get('refresh_token');
         const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
           refresh: refreshToken,
         });
 
         const { access } = response.data;
-        localStorage.setItem('access_token', access);
+        tokenStorage.set('access_token', access);
 
         originalRequest.headers.Authorization = `Bearer ${access}`;
         return api(originalRequest);
       } catch (refreshError) {
         // Token de rafraîchissement invalide, déconnecter l'utilisateur
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        tokenStorage.remove('access_token');
+        tokenStorage.remove('refresh_token');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -67,31 +88,28 @@ export const authService = {
     last_name?: string;
   }) => {
     const response = await api.post('/auth/register/', data);
-    if (response.data.tokens) {
-      localStorage.setItem('access_token', response.data.tokens.access);
-      localStorage.setItem('refresh_token', response.data.tokens.refresh);
-    }
     return response.data;
   },
 
   // Connexion
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string, remember: boolean = true) => {
     const response = await api.post('/auth/login/', { email, password });
     if (response.data.tokens) {
-      localStorage.setItem('access_token', response.data.tokens.access);
-      localStorage.setItem('refresh_token', response.data.tokens.refresh);
+      tokenStorage.setRememberMe(remember);
+      tokenStorage.set('access_token', response.data.tokens.access, remember);
+      tokenStorage.set('refresh_token', response.data.tokens.refresh, remember);
     }
     return response.data;
   },
 
   // Déconnexion
   logout: async () => {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = tokenStorage.get('refresh_token');
     try {
       await api.post('/auth/logout/', { refresh_token: refreshToken });
     } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      tokenStorage.remove('access_token');
+      tokenStorage.remove('refresh_token');
     }
   },
 
@@ -147,11 +165,23 @@ export const authService = {
     return response.data;
   },
 
+  // Vérifier l'adresse email
+  verifyEmail: async (uid: string, token: string) => {
+    const response = await api.get(`/auth/verify-email/${uid}/${token}/`);
+    return response.data;
+  },
+
+  // Renvoyer l'email de vérification
+  resendVerification: async (email: string) => {
+    const response = await api.post('/auth/resend-verification/', { email });
+    return response.data;
+  },
+
   // Supprimer le compte
   deleteAccount: async () => {
     const response = await api.delete('/auth/delete/');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    tokenStorage.remove('access_token');
+    tokenStorage.remove('refresh_token');
     return response.data;
   },
 };
@@ -179,13 +209,13 @@ export const productService = {
     return response.data;
   },
 
-  getProductsByType: async (type: string) => {
-    const response = await api.get(`/products/type/${type}/`);
+  getProductsByType: async (type: string, params?: Record<string, string>) => {
+    const response = await api.get(`/products/type/${type}/`, { params });
     return response.data;
   },
 
-  getProductsByCategory: async (categorySlug: string) => {
-    const response = await api.get('/products/', { params: { category__slug: categorySlug } });
+  getProductsByCategory: async (categorySlug: string, params?: Record<string, string>) => {
+    const response = await api.get('/products/', { params: { category__slug: categorySlug, ...params } });
     return response.data;
   },
 
@@ -254,8 +284,8 @@ export const productService = {
     return response.data;
   },
 
-  adminDeleteCategory: async (slug: string) => {
-    const response = await api.delete(`/products/admin/categories/${slug}/`);
+  adminDeleteCategory: async (id: number) => {
+    const response = await api.delete(`/products/admin/categories/${id}/`);
     return response.data;
   },
 
@@ -310,6 +340,14 @@ export const orderService = {
 
   getPurchases: async () => {
     const response = await api.get('/orders/purchases/');
+    return response.data;
+  },
+
+  // Téléchargement protégé d'un produit acheté (authentifié + vérifié)
+  downloadProduct: async (productId: string) => {
+    const response = await api.get(`/orders/purchases/${productId}/download/`, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 
@@ -414,7 +452,7 @@ export const adminService = {
 };
 
 export const isAuthenticated = (): boolean => {
-  return !!localStorage.getItem('access_token');
+  return !!tokenStorage.get('access_token');
 };
 
 export default api;

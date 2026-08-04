@@ -1,0 +1,40 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<p>Bonjour {{ order.billing_name|default:"cher client" }},</p>
+
+<p>Merci pour votre achat ! Votre commande <strong>{{ order.order_number }}</strong>
+a bien été confirmée et est en cours de préparation. ✅</p>
+
+<table class="items">
+    <thead>
+        <tr>
+            <th>Produit</th>
+            <th>Quantité</th>
+            <th>Prix</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.product_title }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.total_price }} €</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if order.discount_amount %}
+<p class="muted">Réduction appliquée : -{{ order.discount_amount }} €</p>
+{% endif %}
+
+<p class="total">Total payé : {{ order.total_amount }} €</p>
+
+<p>Vous pouvez consulter le détail de vos achats depuis votre espace client :</p>
+
+<p style="text-align:center;">
+    <a class="button" href="{{ frontend_url }}/compte/commandes">Suivre ma commande</a>
+</p>
+
+<p>L'équipe Tatlight</p>
+{% endblock %}

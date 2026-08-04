@@ -54,7 +54,7 @@ export default function Product() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full" />
+        <div className="animate-spin w-12 h-12 border-4 border-[#C9A227] border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -64,7 +64,7 @@ export default function Product() {
       <div className="min-h-screen bg-white py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Produit introuvable</h1>
-          <Link to="/" className="text-[#D4AF37] hover:underline">Retour à l'accueil</Link>
+          <Link to="/" className="text-[#C9A227] hover:underline">Retour à l'accueil</Link>
         </div>
       </div>
     )
@@ -81,17 +81,17 @@ export default function Product() {
   return (
     <div className="min-h-screen bg-white py-12">
       <div className="container mx-auto px-4">
-        <div className="flex items-center gap-2 text-[#D4AF37]/60 text-base mb-8">
-          <Link to="/" className="hover:text-[#D4AF37] transition-colors">Accueil</Link>
+        <div className="flex items-center gap-2 text-[#C9A227]/60 text-base mb-8">
+          <Link to="/" className="hover:text-[#C9A227] transition-colors">Accueil</Link>
           <span>/</span>
-          <Link to={`/categorie/${product.category?.slug || product.type}`} className="hover:text-[#D4AF37] transition-colors">{product.category?.name || product.type}</Link>
+          <Link to={`/categorie/${product.category?.slug || product.type}`} className="hover:text-[#C9A227] transition-colors">{product.category?.name || product.type}</Link>
           <span>/</span>
-          <span className="text-[#D4AF37]">{product.title}</span>
+          <span className="text-[#C9A227]">{product.title}</span>
         </div>
 
         <div className="grid md:grid-cols-2 gap-12 mb-16">
           <div className="space-y-4">
-            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-[#D4AF37]/30 bg-[#D4AF37]/5">
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-[#C9A227]/30 bg-[#C9A227]/5">
               {(() => {
                 const currentSrc = allImages[activeImageIndex] ?? allImages[0]
                 return (
@@ -99,7 +99,7 @@ export default function Product() {
                     {currentSrc ? (
                       <img src={currentSrc} alt={product.title} className="w-full h-full object-cover transition-opacity" key={currentSrc} />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Sparkles className="w-16 h-16 text-[#D4AF37]/30" /></div>
+                      <div className="w-full h-full flex items-center justify-center"><Sparkles className="w-16 h-16 text-[#C9A227]/30" /></div>
                     )}
                     {allImages.length > 1 && (
                       <>
@@ -115,11 +115,11 @@ export default function Product() {
                 )
               })()}
               <div className="absolute top-6 right-6 flex flex-col gap-2">
-                <div className="px-4 py-2 bg-[#D4AF37] text-[#0D1B2A] rounded-full text-sm font-semibold flex items-center gap-2">
+                <div className="px-4 py-2 bg-[#C9A227] text-[#0D1B2A] rounded-full text-sm font-semibold flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />{product.sales_count} ventes
                 </div>
                 {product.is_featured && (
-                  <div className="px-4 py-2 bg-white/90 text-[#D4AF37] rounded-full text-sm font-semibold flex items-center gap-2 border border-[#D4AF37]/30">
+                  <div className="px-4 py-2 bg-white/90 text-[#C9A227] rounded-full text-sm font-semibold flex items-center gap-2 border border-[#C9A227]/30">
                     <Sparkles className="w-4 h-4" /> Populaire
                   </div>
                 )}
@@ -128,7 +128,7 @@ export default function Product() {
             {allImages.length > 1 && (
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {allImages.map((src, idx) => (
-                  <button key={idx} onClick={() => setActiveImageIndex(idx)} className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${activeImageIndex === idx ? 'border-[#D4AF37]' : 'border-transparent opacity-60 hover:opacity-100'}`}>
+                  <button key={idx} onClick={() => setActiveImageIndex(idx)} className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${activeImageIndex === idx ? 'border-[#C9A227]' : 'border-transparent opacity-60 hover:opacity-100'}`}>
                     <img src={src} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
@@ -137,13 +137,13 @@ export default function Product() {
           </div>
 
           <div className="flex flex-col">
-            <div className="inline-flex items-center gap-2 text-[#D4AF37] text-sm font-medium mb-3 uppercase">{product.category?.name || product.type}</div>
+            <div className="inline-flex items-center gap-2 text-[#C9A227] text-sm font-medium mb-3 uppercase">{product.category?.name || product.type}</div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">{product.title}</h1>
 
             <div className="flex items-center gap-4 mb-6">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (<Star key={i} className={`w-5 h-5 ${i < Math.floor(avgRating) ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-[#D4AF37]/30'}`} />))}
+                  {[...Array(5)].map((_, i) => (<Star key={i} className={`w-5 h-5 ${i < Math.floor(avgRating) ? 'fill-[#C9A227] text-[#C9A227]' : 'text-[#C9A227]/30'}`} />))}
                 </div>
                 <span className="text-gray-900 font-semibold">{avgRating.toFixed(1)}</span>
               </div>
@@ -159,8 +159,8 @@ export default function Product() {
                 <div className="grid grid-cols-1 gap-3">
                   {allFeatures.map((feature: string, index: number) => (
                     <div key={index} className="flex items-center gap-3 text-gray-700">
-                      <div className="w-6 h-6 bg-[#D4AF37]/20 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Check className="w-4 h-4 text-[#D4AF37]" />
+                      <div className="w-6 h-6 bg-[#C9A227]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Check className="w-4 h-4 text-[#C9A227]" />
                       </div>
                       {feature}
                     </div>
@@ -169,14 +169,14 @@ export default function Product() {
               </div>
             )}
 
-            <div className="p-6 bg-gradient-to-br from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 rounded-2xl mb-4">
+            <div className="p-6 bg-gradient-to-br from-[#C9A227]/10 to-transparent border border-[#C9A227]/30 rounded-2xl mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-4xl font-bold text-[#D4AF37] mb-1">{product.price}€</div>
+                  <div className="text-4xl font-bold text-[#C9A227] mb-1">{product.price}€</div>
                   <div className="text-gray-500 text-sm">Accès immédiat après l'achat</div>
                 </div>
                 <div className="text-center">
-                  <div className="flex items-center gap-2 text-[#D4AF37] mb-1">
+                  <div className="flex items-center gap-2 text-[#C9A227] mb-1">
                     <Gift className="w-5 h-5" />
                     <span className="font-bold text-lg">+{loyaltyPoints}</span>
                   </div>
@@ -184,10 +184,10 @@ export default function Product() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Link to={`/paiement/${product.slug}`} className="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all group">
+                <Link to={isAuthenticated ? `/paiement/${product.slug}` : '/connexion'} className="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all group">
                   <ShoppingCart className="w-5 h-5" /> Acheter <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <button onClick={() => { addItem({ productId: product.id, slug: product.slug, title: product.title, price: product.price, image: product.image, quantity: 1 }); toast.success('Ajouté au panier !'); }} className="px-6 py-4 border-2 border-[#D4AF37]/30 text-[#D4AF37] rounded-full font-semibold hover:bg-[#D4AF37]/10 transition-all whitespace-nowrap">
+                <button onClick={() => { addItem({ productId: product.id, slug: product.slug, title: product.title, price: product.price, image: product.image, quantity: 1 }); toast.success('Ajouté au panier !'); }} className="px-6 py-4 border-2 border-[#C9A227]/30 text-[#C9A227] rounded-full font-semibold hover:bg-[#C9A227]/10 transition-all whitespace-nowrap">
                   + Panier
                 </button>
               </div>
@@ -201,44 +201,44 @@ export default function Product() {
         </div>
 
         <div className="mb-16">
-          <div className="flex gap-4 mb-8 border-b border-[#D4AF37]/20">
-            <button onClick={() => setSelectedTab('description')} className={`px-6 py-3 font-semibold transition-colors relative ${selectedTab === 'description' ? 'text-[#D4AF37]' : 'text-gray-500 hover:text-gray-900'}`}>
+          <div className="flex gap-4 mb-8 border-b border-[#C9A227]/20">
+            <button onClick={() => setSelectedTab('description')} className={`px-6 py-3 font-semibold transition-colors relative ${selectedTab === 'description' ? 'text-[#C9A227]' : 'text-gray-500 hover:text-gray-900'}`}>
               Description Complète
-              {selectedTab === 'description' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D4AF37]"></div>}
+              {selectedTab === 'description' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A227]"></div>}
             </button>
-            <button onClick={() => setSelectedTab('avis')} className={`px-6 py-3 font-semibold transition-colors relative ${selectedTab === 'avis' ? 'text-[#D4AF37]' : 'text-gray-500 hover:text-gray-900'}`}>
+            <button onClick={() => setSelectedTab('avis')} className={`px-6 py-3 font-semibold transition-colors relative ${selectedTab === 'avis' ? 'text-[#C9A227]' : 'text-gray-500 hover:text-gray-900'}`}>
               Avis ({product.rating_count})
-              {selectedTab === 'avis' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D4AF37]"></div>}
+              {selectedTab === 'avis' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A227]"></div>}
             </button>
           </div>
 
           {selectedTab === 'description' ? (
-            <div className="p-8 bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-2xl">
+            <div className="p-8 bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-2xl">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">À propos de ce contenu</h2>
               <div className="text-gray-600 leading-relaxed whitespace-pre-line">{product.description}</div>
             </div>
           ) : (
             <div className="space-y-6">
               {isAuthenticated && product.has_purchased && !reviews.some((r: any) => r.user === (user as any)?.id) && (
-                <div className="p-6 bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-2xl">
+                <div className="p-6 bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-2xl">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Donner votre avis</h3>
                   <div className="flex items-center gap-2 mb-4">
                     {[1, 2, 3, 4, 5].map(i => (
                       <button key={i} onClick={() => setReviewRating(i)}>
-                        <Star className={`w-6 h-6 ${i <= reviewRating ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-[#D4AF37]/30'}`} />
+                        <Star className={`w-6 h-6 ${i <= reviewRating ? 'fill-[#C9A227] text-[#C9A227]' : 'text-[#C9A227]/30'}`} />
                       </button>
                     ))}
                   </div>
-                  <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Partagez votre expérience..." rows={3} className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] transition-colors mb-4" />
-                  <button onClick={handleSubmitReview} disabled={submittingReview || !reviewComment.trim()} className="flex items-center gap-2 px-6 py-2 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all disabled:opacity-50">
+                  <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Partagez votre expérience..." rows={3} className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227] transition-colors mb-4" />
+                  <button onClick={handleSubmitReview} disabled={submittingReview || !reviewComment.trim()} className="flex items-center gap-2 px-6 py-2 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all disabled:opacity-50">
                     <Send className="w-4 h-4" /> {submittingReview ? 'Envoi...' : 'Publier'}
                   </button>
                 </div>
               )}
               {isAuthenticated && !product.has_purchased && (
-                <div className="p-6 bg-gradient-to-br from-amber-50 to-transparent border border-amber-200 rounded-2xl">
+                <div className="p-6 bg-gradient-to-br from-[#FBF7EF] to-transparent border border-[#C9A227]/30 rounded-2xl">
                   <div className="flex items-center gap-3 mb-2">
-                    <ShoppingCart className="w-5 h-5 text-amber-600" />
+                    <ShoppingCart className="w-5 h-5 text-[#A07C12]" />
                     <h3 className="text-lg font-bold text-gray-900">Achetez pour donner votre avis</h3>
                   </div>
                   <p className="text-gray-600">Vous devez acheter ce produit avant de pouvoir partager votre expérience.</p>
@@ -253,16 +253,16 @@ export default function Product() {
                 </div>
               )}
               {reviews.length > 0 ? reviews.map((review: any) => (
-                <div key={review.id} className="p-6 bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-2xl">
+                <div key={review.id} className="p-6 bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-2xl">
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-[#D4AF37]/20 flex items-center justify-center border-2 border-[#D4AF37]/30">
-                      <Users className="w-5 h-5 text-[#D4AF37]" />
+                    <div className="w-12 h-12 rounded-full bg-[#C9A227]/20 flex items-center justify-center border-2 border-[#C9A227]/30">
+                      <Users className="w-5 h-5 text-[#C9A227]" />
                     </div>
                     <div className="flex-grow">
                       <div className="flex items-center justify-between mb-2">
                         <div><div className="text-gray-900 font-semibold">{review.user_name || review.user?.email || 'Utilisateur'}</div><div className="text-gray-500 text-sm">{new Date(review.created_at).toLocaleDateString('fr-FR')}</div></div>
                         <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (<Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-[#D4AF37]/30'}`} />))}
+                          {[...Array(5)].map((_, i) => (<Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-[#C9A227] text-[#C9A227]' : 'text-[#C9A227]/30'}`} />))}
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed">{review.comment}</p>
@@ -270,7 +270,7 @@ export default function Product() {
                   </div>
                 </div>
               )) : (
-                <div className="p-12 text-center bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-2xl">
+                <div className="p-12 text-center bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-2xl">
                   <p className="text-gray-500">Aucun avis pour le moment. Soyez le premier à donner votre avis !</p>
                 </div>
               )}

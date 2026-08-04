@@ -1,0 +1,15 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<p>Bonjour {{ user.first_name|default:user.email }},</p>
+
+<p>Bienvenue sur <strong>Tatlight</strong> ! Votre compte a été créé avec succès. 🎉</p>
+
+<p>Nous sommes ravis de vous accueillir dans notre communauté d'excellence.<br>
+Commencez dès maintenant à explorer nos contenus premium :</p>
+
+<p style="text-align:center;">
+    <a class="button" href="{{ frontend_url }}">Découvrir nos contenus</a>
+</p>
+
+<p>À très bientôt,<br>L'équipe Tatlight</p>
+{% endblock %}

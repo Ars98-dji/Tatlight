@@ -160,13 +160,26 @@ export default function Admin() {
     finally { setLoading(false) }
   }
 
+  const errMsg = (e: any, fallback: string) => {
+    const d = e?.response?.data
+    if (typeof d === 'string') return d
+    if (d?.detail) return d.detail
+    if (d?.error) return d.error
+    if (d && typeof d === 'object') {
+      const first = Object.values(d)[0]
+      if (Array.isArray(first)) return first.join(', ')
+      if (typeof first === 'string') return first
+    }
+    return fallback
+  }
+
   const handleDeleteReview = async (id: string) => {
     if (!confirm('Supprimer cet avis ?')) return
     try {
       await productService.adminDeleteReview(id)
       toast.success('Avis supprimé')
       loadReviews()
-    } catch { toast.error('Erreur suppression avis') }
+    } catch (e) { toast.error(errMsg(e, 'Erreur suppression avis')) }
   }
 
   const handleDeleteProduct = async (slug: string) => {
@@ -175,7 +188,7 @@ export default function Admin() {
       await productService.adminDeleteProduct(slug)
       toast.success('Produit supprimé')
       loadProducts()
-    } catch { toast.error('Erreur lors de la suppression') }
+    } catch (e) { toast.error(errMsg(e, 'Erreur lors de la suppression')) }
   }
 
   const openProductModal = async (product?: AdminProduct) => {
@@ -315,7 +328,7 @@ export default function Admin() {
       await orderService.deleteCoupon(id)
       toast.success('Coupon supprimé')
       loadCoupons()
-    } catch { toast.error('Erreur lors de la suppression') }
+    } catch (e) { toast.error(errMsg(e, 'Erreur lors de la suppression')) }
   }
 
   const handleToggleUserStatus = async (u: AdminUser) => {
@@ -340,7 +353,7 @@ export default function Admin() {
       await adminService.deleteUser(id)
       toast.success('Utilisateur supprimé')
       loadUsers()
-    } catch { toast.error('Erreur lors de la suppression') }
+    } catch (e) { toast.error(errMsg(e, 'Erreur lors de la suppression')) }
   }
 
   const handleCreateCategory = async () => {
@@ -353,13 +366,13 @@ export default function Admin() {
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Erreur') }
   }
 
-  const handleDeleteCategory = async (slug: string) => {
-    if (!confirm('Supprimer cette catégorie ? Les produits ne seront pas supprimés.')) return
+  const handleDeleteCategory = async (id: number) => {
+    if (!confirm('Supprimer cette catégorie ? Ses produits seront également supprimés.')) return
     try {
-      await productService.adminDeleteCategory(slug)
+      await productService.adminDeleteCategory(id)
       toast.success('Catégorie supprimée')
       loadCategories()
-    } catch { toast.error('Erreur') }
+    } catch (e) { toast.error(errMsg(e, 'Erreur')) }
   }
 
   const totalSales = products.reduce((s, p) => s + p.sales_count, 0)
@@ -375,7 +388,7 @@ export default function Admin() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full" />
+        <div className="animate-spin w-12 h-12 border-4 border-[#C9A227] border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -389,7 +402,7 @@ export default function Admin() {
           <ShieldAlert className="w-20 h-20 text-red-400 mx-auto mb-6" />
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Accès <span className="text-red-400">Refusé</span></h1>
           <p className="text-gray-500 mb-8">Vous n'avez pas les droits d'administration nécessaires.</p>
-          <button onClick={() => navigate('/')} className="px-8 py-3 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
+          <button onClick={() => navigate('/')} className="px-8 py-3 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
             Retour à l'accueil
           </button>
         </div>
@@ -411,7 +424,7 @@ export default function Admin() {
       <div className="container mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
-            Tableau de <span className="text-[#D4AF37]">Bord</span>
+            Tableau de <span className="text-[#C9A227]">Bord</span>
           </h1>
           <p className="text-gray-500">Gérez votre plateforme Tatlight</p>
         </div>
@@ -421,8 +434,8 @@ export default function Admin() {
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold whitespace-nowrap transition-all ${
                 activeTab === tab.id
-                  ? 'bg-[#D4AF37] text-[#0D1B2A]'
-                  : 'bg-[#D4AF37]/10 text-gray-600 hover:bg-[#D4AF37]/20 hover:text-gray-900'
+                  ? 'bg-[#C9A227] text-[#0D1B2A]'
+                  : 'bg-[#C9A227]/10 text-gray-600 hover:bg-[#C9A227]/20 hover:text-gray-900'
               }`}
             >
               <tab.icon className="w-4 h-4" /> {tab.label}
@@ -435,15 +448,15 @@ export default function Admin() {
           <div className="space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { label: 'Produits', value: products.length.toString(), change: `${activeProducts} actifs`, icon: Package, color: 'from-[#D4AF37]/20 to-[#D4AF37]/5' },
+                { label: 'Produits', value: products.length.toString(), change: `${activeProducts} actifs`, icon: Package, color: 'from-[#C9A227]/20 to-[#C9A227]/5' },
                 { label: 'Ventes', value: totalSales.toString(), change: `${completedOrders.length} commandes`, icon: TrendingUp, color: 'from-green-500/20 to-green-500/5' },
                 { label: 'Revenus', value: `${totalRevenue.toFixed(0)}€`, change: `${orders.length} commandes`, icon: DollarSign, color: 'from-blue-500/20 to-blue-500/5' },
                 { label: 'Utilisateurs', value: users.length.toString(), change: `${users.filter(u => u.is_active).length} actifs`, icon: Users, color: 'from-purple-500/20 to-purple-500/5' },
               ].map((stat, i) => (
-                <div key={i} className={`p-6 bg-gradient-to-br ${stat.color} border border-[#D4AF37]/20 rounded-2xl`}>
+                <div key={i} className={`p-6 bg-gradient-to-br ${stat.color} border border-[#C9A227]/20 rounded-2xl`}>
                   <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 bg-[#D4AF37]/20 rounded-xl flex items-center justify-center">
-                      <stat.icon className="w-6 h-6 text-[#D4AF37]" />
+                    <div className="w-12 h-12 bg-[#C9A227]/20 rounded-xl flex items-center justify-center">
+                      <stat.icon className="w-6 h-6 text-[#C9A227]" />
                     </div>
                     <span className="text-green-400 text-sm font-semibold">{stat.change}</span>
                   </div>
@@ -453,12 +466,12 @@ export default function Admin() {
               ))}
             </div>
 
-            <div className="p-8 bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-3xl">
+            <div className="p-8 bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-3xl">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Top <span className="text-[#D4AF37]">Produits</span>
+                  Top <span className="text-[#C9A227]">Produits</span>
                 </h2>
-                <button onClick={() => setActiveTab('products')} className="text-[#D4AF37] hover:text-gray-900 transition-colors">Gérer</button>
+                <button onClick={() => setActiveTab('products')} className="text-[#C9A227] hover:text-gray-900 transition-colors">Gérer</button>
               </div>
               <div className="space-y-4">
                 {[...products].sort((a, b) => b.sales_count - a.sales_count).slice(0, 5).map(p => (
@@ -467,7 +480,7 @@ export default function Admin() {
                       <h3 className="text-gray-900 font-semibold mb-1">{p.title}</h3>
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <span>{p.sales_count} ventes</span>
-                        <span className="text-[#D4AF37]">{p.price}€</span>
+                        <span className="text-[#C9A227]">{p.price}€</span>
                       </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${p.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
@@ -479,17 +492,17 @@ export default function Admin() {
               </div>
             </div>
 
-            <div className="p-8 bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-3xl">
+            <div className="p-8 bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-3xl">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Dernières <span className="text-[#D4AF37]">Commandes</span>
+                  Dernières <span className="text-[#C9A227]">Commandes</span>
                 </h2>
-                <button onClick={() => setActiveTab('coupons')} className="text-[#D4AF37] hover:text-gray-900 transition-colors">Voir tout</button>
+                <button onClick={() => setActiveTab('coupons')} className="text-[#C9A227] hover:text-gray-900 transition-colors">Voir tout</button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-gray-500 border-b border-[#D4AF37]/20">
+                    <tr className="text-gray-500 border-b border-[#C9A227]/20">
                       <th className="text-left py-3 px-2">N°</th>
                       <th className="text-left py-3 px-2">Statut</th>
                       <th className="text-right py-3 px-2">Montant</th>
@@ -524,40 +537,40 @@ export default function Admin() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Gestion des <span className="text-[#D4AF37]">Produits</span>
+                Gestion des <span className="text-[#C9A227]">Produits</span>
               </h2>
-              <button onClick={() => openProductModal()} className="flex items-center gap-2 px-6 py-3 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
+              <button onClick={() => openProductModal()} className="flex items-center gap-2 px-6 py-3 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
                 <Plus className="w-4 h-4" /> Ajouter un Produit
               </button>
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full" /></div>
+              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#C9A227] border-t-transparent rounded-full" /></div>
             ) : (
               <div className="grid gap-4">
                 {products.map(p => (
-                  <div key={p.id} className="p-6 bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-2xl">
+                  <div key={p.id} className="p-6 bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-2xl">
                     <div className="flex items-center gap-6">
                       {p.image ? (
                         <img src={p.image} alt={p.title} className="w-24 h-24 object-cover rounded-xl" />
                       ) : (
-                        <div className="w-24 h-24 bg-[#D4AF37]/10 rounded-xl flex items-center justify-center">
-                          <Package className="w-8 h-8 text-[#D4AF37]" />
+                        <div className="w-24 h-24 bg-[#C9A227]/10 rounded-xl flex items-center justify-center">
+                          <Package className="w-8 h-8 text-[#C9A227]" />
                         </div>
                       )}
                       <div className="flex-grow">
                         <h3 className="text-xl font-bold text-gray-900 mb-2">{p.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
                           <span>Type: {p.type}</span><span>•</span>
-                          <span>Prix: <span className="text-[#D4AF37] font-semibold">{p.price}€</span></span>
+                          <span>Prix: <span className="text-[#C9A227] font-semibold">{p.price}€</span></span>
                           {p.compare_price && <span className="line-through text-gray-400">{p.compare_price}€</span>}<span>•</span>
                           <span>{p.sales_count} ventes</span><span>•</span>
                           <span className={p.is_active ? 'text-green-500' : 'text-red-400'}>{p.is_active ? 'Actif' : 'Inactif'}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => openProductModal(p)} className="p-3 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 rounded-xl transition-colors">
-                          <Edit className="w-4 h-4 text-[#D4AF37]" />
+                        <button onClick={() => openProductModal(p)} className="p-3 bg-[#C9A227]/10 hover:bg-[#C9A227]/20 rounded-xl transition-colors">
+                          <Edit className="w-4 h-4 text-[#C9A227]" />
                         </button>
                         <button onClick={() => handleDeleteProduct(p.slug)} className="p-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors">
                           <Trash2 className="w-4 h-4 text-red-400" />
@@ -576,22 +589,22 @@ export default function Admin() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Gestion des <span className="text-[#D4AF37]">Catégories</span>
+                Gestion des <span className="text-[#C9A227]">Catégories</span>
               </h2>
               <button onClick={() => { setEditingCategory(null); setCategoryName(''); setCategoryDescription(''); setShowCategoryModal(true); }}
-                className="flex items-center gap-2 px-6 py-3 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
+                className="flex items-center gap-2 px-6 py-3 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
                 <Plus className="w-4 h-4" /> Nouvelle Catégorie
               </button>
             </div>
             {loading ? (
-              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full" /></div>
+              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#C9A227] border-t-transparent rounded-full" /></div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {categories.map(c => (
-                  <div key={c.id} className="p-6 bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/20 rounded-2xl">
+                  <div key={c.id} className="p-6 bg-gradient-to-br from-[#C9A227]/5 to-transparent border border-[#C9A227]/20 rounded-2xl">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold text-gray-900">{c.name}</h3>
-                      <button onClick={() => handleDeleteCategory(c.slug)} className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors">
+                      <button onClick={() => handleDeleteCategory(c.id)} className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors">
                         <Trash2 className="w-4 h-4 text-red-400" />
                       </button>
                     </div>
@@ -609,10 +622,10 @@ export default function Admin() {
                   </div>
                   <div className="space-y-4">
                     <input value={categoryName} onChange={e => setCategoryName(e.target.value)} placeholder="Nom de la catégorie"
-                      className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                      className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                     <textarea value={categoryDescription} onChange={e => setCategoryDescription(e.target.value)} placeholder="Description (optionnelle)"
-                      className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] resize-none h-24" />
-                    <button onClick={handleCreateCategory} className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
+                      className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227] resize-none h-24" />
+                    <button onClick={handleCreateCategory} className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
                       <Save className="w-4 h-4" /> {editingCategory ? 'Mettre à jour' : 'Créer'}
                     </button>
                   </div>
@@ -627,22 +640,22 @@ export default function Admin() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Gestion des <span className="text-[#D4AF37]">Utilisateurs</span>
+                Gestion des <span className="text-[#C9A227]">Utilisateurs</span>
               </h2>
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Rechercher..."
-                  className="pl-10 pr-4 py-2 bg-gray-50 border border-[#D4AF37]/30 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                  className="pl-10 pr-4 py-2 bg-gray-50 border border-[#C9A227]/30 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
               </div>
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full" /></div>
+              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#C9A227] border-t-transparent rounded-full" /></div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-gray-500 border-b border-[#D4AF37]/20">
+                    <tr className="text-gray-500 border-b border-[#C9A227]/20">
                       <th className="text-left py-3 px-3">Utilisateur</th>
                       <th className="text-left py-3 px-3">Email</th>
                       <th className="text-center py-3 px-3">Statut</th>
@@ -675,8 +688,8 @@ export default function Admin() {
                         <td className="py-4 px-3 text-center">
                           <span className={`text-xs font-semibold ${
                             u.loyalty_tier === 'platinum' ? 'text-purple-500' :
-                            u.loyalty_tier === 'gold' ? 'text-[#D4AF37]' :
-                            u.loyalty_tier === 'silver' ? 'text-gray-400' : 'text-amber-600'
+                            u.loyalty_tier === 'gold' ? 'text-[#C9A227]' :
+                            u.loyalty_tier === 'silver' ? 'text-gray-400' : 'text-[#B87333]'
                           }`}>{u.loyalty_tier}</span>
                         </td>
                         <td className="py-4 px-3">
@@ -707,34 +720,34 @@ export default function Admin() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Gestion des <span className="text-[#D4AF37]">Coupons</span>
+                Gestion des <span className="text-[#C9A227]">Coupons</span>
               </h2>
-              <button onClick={() => openCouponModal()} className="flex items-center gap-2 px-6 py-3 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
+              <button onClick={() => openCouponModal()} className="flex items-center gap-2 px-6 py-3 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
                 <Plus className="w-4 h-4" /> Créer un Coupon
               </button>
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full" /></div>
+              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#C9A227] border-t-transparent rounded-full" /></div>
             ) : coupons.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-6">
                 {coupons.map(coupon => {
                   const discount = coupon.discount_type === 'percent' ? `${coupon.discount_percent}%` : `${coupon.discount_amount}€`
                   const usage = Math.min(100, coupon.max_uses > 0 ? (coupon.used_count / coupon.max_uses) * 100 : 0)
                   return (
-                    <div key={coupon.id} className="p-6 bg-gradient-to-br from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 rounded-2xl">
+                    <div key={coupon.id} className="p-6 bg-gradient-to-br from-[#C9A227]/10 to-transparent border border-[#C9A227]/30 rounded-2xl">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-[#D4AF37] rounded-xl flex items-center justify-center">
+                          <div className="w-12 h-12 bg-[#C9A227] rounded-xl flex items-center justify-center">
                             <Tag className="w-6 h-6 text-[#0D1B2A]" />
                           </div>
                           <div>
                             <div className="text-xl font-bold text-gray-900">{coupon.code}</div>
-                            <div className="text-[#D4AF37] font-semibold">{discount} de réduction</div>
+                            <div className="text-[#C9A227] font-semibold">{discount} de réduction</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => openCouponModal(coupon)} className="p-2 hover:bg-[#D4AF37]/10 rounded-lg transition-colors">
+                          <button onClick={() => openCouponModal(coupon)} className="p-2 hover:bg-[#C9A227]/10 rounded-lg transition-colors">
                             <Edit className="w-4 h-4 text-gray-500" />
                           </button>
                           <button onClick={() => handleDeleteCoupon(coupon.id)} className="p-2 hover:bg-red-50 rounded-lg transition-colors">
@@ -749,7 +762,7 @@ export default function Admin() {
                         </div>
                         {coupon.max_uses > 0 && (
                           <div className="w-full bg-gray-50 rounded-full h-2 overflow-hidden">
-                            <div className="bg-[#D4AF37] h-full rounded-full transition-all" style={{ width: `${usage}%` }} />
+                            <div className="bg-[#C9A227] h-full rounded-full transition-all" style={{ width: `${usage}%` }} />
                           </div>
                         )}
                       </div>
@@ -768,18 +781,18 @@ export default function Admin() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Gestion des <span className="text-[#D4AF37]">Avis</span>
+                Gestion des <span className="text-[#C9A227]">Avis</span>
               </h2>
               <span className="text-sm text-gray-500">{reviews.length} avis</span>
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full" /></div>
+              <div className="flex justify-center py-12"><div className="animate-spin w-12 h-12 border-4 border-[#C9A227] border-t-transparent rounded-full" /></div>
             ) : reviews.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-gray-500 border-b border-[#D4AF37]/20">
+                    <tr className="text-gray-500 border-b border-[#C9A227]/20">
                       <th className="text-left py-3 px-3">Produit</th>
                       <th className="text-left py-3 px-3">Utilisateur</th>
                       <th className="text-center py-3 px-3">Note</th>
@@ -792,7 +805,7 @@ export default function Admin() {
                     {reviews.map((r: any) => (
                       <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50/50">
                         <td className="py-4 px-3">
-                          <a href={`/produit/${r.product_slug}`} target="_blank" className="text-gray-900 font-semibold hover:text-[#D4AF37]">{r.product_title}</a>
+                          <a href={`/produit/${r.product_slug}`} target="_blank" className="text-gray-900 font-semibold hover:text-[#C9A227]">{r.product_title}</a>
                         </td>
                         <td className="py-4 px-3">
                           <div className="font-semibold text-gray-900">{r.user_name}</div>
@@ -801,7 +814,7 @@ export default function Admin() {
                         <td className="py-4 px-3 text-center">
                           <div className="flex items-center justify-center gap-0.5">
                             {[1, 2, 3, 4, 5].map(i => (
-                              <Star key={i} className={`w-3.5 h-3.5 ${i <= r.rating ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-gray-300'}`} />
+                              <Star key={i} className={`w-3.5 h-3.5 ${i <= r.rating ? 'fill-[#C9A227] text-[#C9A227]' : 'text-gray-300'}`} />
                             ))}
                           </div>
                         </td>
@@ -840,7 +853,7 @@ export default function Admin() {
                 <div className="sm:col-span-2 space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Titre *</label>
                   <input value={productForm.title} onChange={e => setProductForm({...productForm, title: e.target.value})} placeholder="Titre du produit"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
 
                 {/* Image principale */}
@@ -848,7 +861,7 @@ export default function Admin() {
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Image de couverture</label>
                   <div className="flex items-center gap-4">
                     <label className="flex-shrink-0 cursor-pointer">
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 border-2 border-dashed border-[#D4AF37]/30 rounded-xl flex items-center justify-center hover:border-[#D4AF37] transition-colors overflow-hidden">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 border-2 border-dashed border-[#C9A227]/30 rounded-xl flex items-center justify-center hover:border-[#C9A227] transition-colors overflow-hidden">
                         {mainImagePreview ? (
                           <img src={mainImagePreview} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
@@ -867,7 +880,7 @@ export default function Admin() {
                 <div className="space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Type</label>
                   <select value={productForm.type} onChange={e => setProductForm({...productForm, type: e.target.value})}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#D4AF37]">
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#C9A227]">
                     <option value="ebook">Ebook</option>
                     <option value="template">Template</option>
                     <option value="formation">Formation</option>
@@ -876,7 +889,7 @@ export default function Admin() {
                 <div className="space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Catégorie</label>
                   <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#D4AF37]">
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#C9A227]">
                     <option value="">Sélectionner</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
@@ -884,32 +897,32 @@ export default function Admin() {
                 <div className="space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Prix (€) *</label>
                   <input type="number" step="0.01" value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} placeholder="29.99"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Prix barre (€)</label>
                   <input type="number" step="0.01" value={productForm.compare_price} onChange={e => setProductForm({...productForm, compare_price: e.target.value})} placeholder="49.99"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Format</label>
                   <input value={productForm.format} onChange={e => setProductForm({...productForm, format: e.target.value})} placeholder="PDF, MP4, ZIP..."
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Taille fichier</label>
                   <input value={productForm.file_size} onChange={e => setProductForm({...productForm, file_size: e.target.value})} placeholder="10 MB"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Description courte</label>
                   <textarea value={productForm.short_description} onChange={e => setProductForm({...productForm, short_description: e.target.value})} placeholder="Brève description..."
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] resize-none h-16 sm:h-12" />
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227] resize-none h-16 sm:h-12" />
                 </div>
                 <div className="sm:col-span-2 space-y-1 sm:space-y-2">
                   <label className="text-xs sm:text-sm text-gray-500 font-medium">Description complète</label>
                   <textarea value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} placeholder="Description détaillée..."
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] resize-none h-20 sm:h-24" />
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227] resize-none h-20 sm:h-24" />
                 </div>
 
                 {/* Galerie d'images */}
@@ -918,7 +931,7 @@ export default function Admin() {
                   <div className="flex flex-wrap gap-3">
                     {existingGallery.map((img: any) => (
                       <div key={img.id} className="relative group w-16 h-16 sm:w-20 sm:h-20">
-                        <img src={img.image} alt="" className="w-full h-full object-cover rounded-lg border border-[#D4AF37]/20" />
+                        <img src={img.image} alt="" className="w-full h-full object-cover rounded-lg border border-[#C9A227]/20" />
                         <button onClick={async () => {
                           if (!editingProduct) return
                           try {
@@ -933,7 +946,7 @@ export default function Admin() {
                     ))}
                     {galleryPreviews.map((url, idx) => (
                       <div key={idx} className="relative group w-16 h-16 sm:w-20 sm:h-20">
-                        <img src={url} alt="" className="w-full h-full object-cover rounded-lg border border-[#D4AF37]/20" />
+                        <img src={url} alt="" className="w-full h-full object-cover rounded-lg border border-[#C9A227]/20" />
                         <button onClick={() => {
                           setGalleryFiles(prev => prev.filter((_, i) => i !== idx))
                           setGalleryPreviews(prev => prev.filter((_, i) => i !== idx))
@@ -942,7 +955,7 @@ export default function Admin() {
                         </button>
                       </div>
                     ))}
-                    <label className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 border-2 border-dashed border-[#D4AF37]/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#D4AF37] transition-colors">
+                    <label className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 border-2 border-dashed border-[#C9A227]/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#C9A227] transition-colors">
                       <Plus className="w-5 h-5 text-gray-300" />
                       <input type="file" accept="image/*" className="hidden" onChange={e => {
                         const files = Array.from(e.target.files || [])
@@ -956,23 +969,23 @@ export default function Admin() {
                 <div className="sm:col-span-2 flex flex-wrap items-center gap-3 sm:gap-6">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={productForm.is_active} onChange={e => setProductForm({...productForm, is_active: e.target.checked})}
-                      className="w-4 h-4 accent-[#D4AF37]" />
+                      className="w-4 h-4 accent-[#C9A227]" />
                     <span className="text-xs sm:text-sm text-gray-600">Actif</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={productForm.is_featured} onChange={e => setProductForm({...productForm, is_featured: e.target.checked})}
-                      className="w-4 h-4 accent-[#D4AF37]" />
+                      className="w-4 h-4 accent-[#C9A227]" />
                     <span className="text-xs sm:text-sm text-gray-600">Mis en avant</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={productForm.is_digital} onChange={e => setProductForm({...productForm, is_digital: e.target.checked})}
-                      className="w-4 h-4 accent-[#D4AF37]" />
+                      className="w-4 h-4 accent-[#C9A227]" />
                     <span className="text-xs sm:text-sm text-gray-600">Digital</span>
                   </label>
                 </div>
               </div>
 
-              <button onClick={handleSaveProduct} className="mt-4 sm:mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
+              <button onClick={handleSaveProduct} className="mt-4 sm:mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
                 <Save className="w-4 h-4" /> {editingProduct ? 'Mettre à jour' : 'Créer le produit'}
               </button>
             </div>
@@ -994,12 +1007,12 @@ export default function Admin() {
                 <div className="space-y-2">
                   <label className="text-sm text-gray-500 font-medium">Code *</label>
                   <input value={couponForm.code} onChange={e => setCouponForm({...couponForm, code: e.target.value.toUpperCase()})} placeholder="PROMO10"
-                    className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-gray-500 font-medium">Type</label>
                   <select value={couponForm.discount_type} onChange={e => setCouponForm({...couponForm, discount_type: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#D4AF37]">
+                    className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#C9A227]">
                     <option value="percent">Pourcentage</option>
                     <option value="fixed">Montant fixe</option>
                   </select>
@@ -1008,45 +1021,45 @@ export default function Admin() {
                   <div className="space-y-2">
                     <label className="text-sm text-gray-500 font-medium">Réduction (%)</label>
                     <input type="number" value={couponForm.discount_percent} onChange={e => setCouponForm({...couponForm, discount_percent: e.target.value})} placeholder="10"
-                      className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                      className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <label className="text-sm text-gray-500 font-medium">Réduction (€)</label>
                     <input type="number" step="0.01" value={couponForm.discount_amount} onChange={e => setCouponForm({...couponForm, discount_amount: e.target.value})} placeholder="5.00"
-                      className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                      className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 )}
                 <div className="space-y-2">
                   <label className="text-sm text-gray-500 font-medium">Achat minimum (€)</label>
                   <input type="number" step="0.01" value={couponForm.min_purchase} onChange={e => setCouponForm({...couponForm, min_purchase: e.target.value})} placeholder="0"
-                    className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-gray-500 font-medium">Utilisations max</label>
                   <input type="number" value={couponForm.max_uses} onChange={e => setCouponForm({...couponForm, max_uses: e.target.value})} placeholder="0 = illimité"
-                    className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-gray-500 font-medium">Valable du</label>
                   <input type="datetime-local" value={couponForm.valid_from} onChange={e => setCouponForm({...couponForm, valid_from: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-gray-500 font-medium">Valable au *</label>
                   <input type="datetime-local" value={couponForm.valid_to} onChange={e => setCouponForm({...couponForm, valid_to: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-[#D4AF37]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#D4AF37]" />
+                    className="w-full px-4 py-3 bg-gray-50 border border-[#C9A227]/30 rounded-xl text-gray-900 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={couponForm.is_active} onChange={e => setCouponForm({...couponForm, is_active: e.target.checked})}
-                      className="w-4 h-4 accent-[#D4AF37]" />
+                      className="w-4 h-4 accent-[#C9A227]" />
                     <span className="text-sm text-gray-600">Actif</span>
                   </label>
                 </div>
               </div>
 
-              <button onClick={handleSaveCoupon} className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4AF37] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
+              <button onClick={handleSaveCoupon} className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#C9A227] text-[#0D1B2A] rounded-full font-semibold hover:glow-gold transition-all">
                 <Save className="w-4 h-4" /> {editingCoupon ? 'Mettre à jour' : 'Créer le coupon'}
               </button>
             </div>

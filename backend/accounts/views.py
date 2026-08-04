@@ -1,4 +1,7 @@
 # accounts/views.py
+import io
+import uuid
+
 from rest_framework import status, generics, permissions, filters
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -6,11 +9,17 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model, authenticate
-from django.core.mail import send_mail
 from django.conf import settings
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.files.base import ContentFile
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
+from PIL import Image
+from tatlight.emails import (
+    send_welcome_email,
+    send_verification_email,
+    send_password_reset_email,
+)
 from .serializers import (
     UserSerializer, AdminUserSerializer, RegisterSerializer, LoginSerializer,
     ChangePasswordSerializer, UpdateProfileSerializer,
@@ -22,92 +31,68 @@ from .models import UserProfile
 User = get_user_model()
 
 
+def _process_image_upload(f):
+    """Valide le contenu réel de l'image et la ré-encode avec un nom sûr.
+
+    Empêche l'upload de fichiers piégés (HTML/JS déguisés en image) : seule
+    une vraie image JPEG/PNG/WEBP passe, ré-encodée par Pillow.
+    """
+    allowed_formats = {
+        'JPEG': 'jpg',
+        'PNG': 'png',
+        'WEBP': 'webp',
+    }
+    try:
+        image = Image.open(f)
+        image.verify()
+    except Exception:
+        return None
+    f.seek(0)
+    try:
+        image = Image.open(f)
+        fmt = image.format
+        if fmt not in allowed_formats:
+            return None
+        if fmt == 'JPEG' and image.mode not in ('RGB', 'L'):
+            image = image.convert('RGB')
+        buffer = io.BytesIO()
+        image.save(buffer, format=fmt)
+        return ContentFile(
+            buffer.getvalue(),
+            name=f'avatar_{uuid.uuid4().hex}.{allowed_formats[fmt]}',
+        )
+    except Exception:
+        return None
+
+
 class RegisterView(generics.CreateAPIView):
     """Vue pour l'inscription d'un nouvel utilisateur"""
     
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_scope = 'register'
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
-        # Générer les tokens JWT
-        refresh = RefreshToken.for_user(user)
+        # Envoyer l'email de vérification (le bienvenue part après la 1ère connexion)
+        send_verification_email(user)
         
-        # Envoyer l'email de bienvenue
-        self.send_welcome_email(user)
-        # Envoyer l'email de vérification
-        self.send_verification_email(user)
-        
+        # Pas de connexion automatique : l'utilisateur doit vérifier son email d'abord
         return Response({
             'user': UserSerializer(user).data,
-            'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            },
-            'message': 'Inscription réussie ! Bienvenue sur Tatlight.'
+            'message': 'Inscription réussie ! Vérifiez votre email pour activer votre compte.'
         }, status=status.HTTP_201_CREATED)
-    
-    def send_welcome_email(self, user):
-        """Envoyer un email de bienvenue au nouvel utilisateur"""
-        subject = 'Bienvenue sur Tatlight ✨'
-        message = f"""
-        Bonjour {user.first_name or user.email},
-        
-        Bienvenue sur Tatlight ! Votre compte a été créé avec succès.
-        
-        Nous sommes ravis de vous accueillir dans notre communauté d'excellence.
-        
-        Commencez dès maintenant à explorer nos contenus premium :
-        {settings.FRONTEND_URL}
-        
-        L'équipe Tatlight
-        """
-        
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=True,
-        )
-    
-    def send_verification_email(self, user):
-        """Envoyer un email de vérification"""
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        verify_link = f"{settings.FRONTEND_URL}/verify-email/{uid}/{token}/"
-        
-        subject = 'Vérifiez votre adresse email - Tatlight'
-        message = f"""
-        Bonjour {user.first_name or user.email},
-        
-        Merci de vous être inscrit sur Tatlight !
-        
-        Veuillez vérifier votre adresse email en cliquant sur le lien ci-dessous :
-        {verify_link}
-        
-        Ce lien est valable pendant 24 heures.
-        
-        L'équipe Tatlight
-        """
-        
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=True,
-        )
 
 
 class LoginView(APIView):
     """Vue pour la connexion"""
     
     permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
     
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -128,9 +113,20 @@ class LoginView(APIView):
                 'error': 'Ce compte a été désactivé.'
             }, status=status.HTTP_401_UNAUTHORIZED)
         
+        if not user.is_verified and not user.is_staff and not user.is_superuser:
+            return Response({
+                'error': 'Votre email n\'a pas encore été vérifié. Cliquez sur le lien reçu dans votre boîte mail pour activer votre compte.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         # Générer les tokens JWT
         refresh = RefreshToken.for_user(user)
-        
+
+        # Email de bienvenue : une seule fois, après la première connexion
+        if not user.welcome_email_sent and not user.is_staff and not user.is_superuser:
+            user.welcome_email_sent = True
+            user.save(update_fields=['welcome_email_sent'])
+            send_welcome_email(user)
+
         return Response({
             'user': UserSerializer(user).data,
             'tokens': {
@@ -222,8 +218,14 @@ class UploadAvatarView(APIView):
                 'error': 'Fichier trop volumineux. Maximum 5 MB.'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        user.avatar = avatar
-        user.save()
+        # Valider que c'est une vraie image et ré-encoder avec un nom sûr
+        processed = _process_image_upload(avatar)
+        if processed is None:
+            return Response({
+                'error': 'Fichier image invalide.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.avatar.save(processed.name, processed, save=True)
         
         return Response({
             'user': UserSerializer(user).data,
@@ -265,38 +267,8 @@ class PasswordResetView(APIView):
         
         try:
             user = User.objects.get(email=email)
-            
-            # Générer le token de réinitialisation
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            
-            # Créer le lien de réinitialisation
-            reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
-            
-            # Envoyer l'email
-            subject = 'Réinitialisation de votre mot de passe Tatlight'
-            message = f"""
-            Bonjour {user.first_name or user.email},
-            
-            Vous avez demandé à réinitialiser votre mot de passe.
-            
-            Cliquez sur le lien ci-dessous pour créer un nouveau mot de passe :
-            {reset_link}
-            
-            Ce lien est valable pendant 24 heures.
-            
-            Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
-            
-            L'équipe Tatlight
-            """
-            
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
+            # Envoyer l'email de réinitialisation (token généré dans le module)
+            send_password_reset_email(user)
             
         except User.DoesNotExist:
             # Ne pas révéler si l'email existe ou non
@@ -362,32 +334,25 @@ def verify_email(request, uidb64, token):
 
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def resend_verification_email(request):
     """Renvoyer l'email de vérification"""
-    user = request.user
-    if user.is_verified:
-        return Response({'message': 'Email déjà vérifié.'}, status=status.HTTP_200_OK)
+    email = request.data.get('email', '').strip()
+    if not email:
+        return Response({'error': 'L\'adresse email est requise.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    token = default_token_generator.make_token(user)
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    verify_link = f"{settings.FRONTEND_URL}/verify-email/{uid}/{token}/"
+    try:
+        user = User.objects.get(email__iexact=email)
+    except User.DoesNotExist:
+        user = None
 
-    subject = 'Vérifiez votre adresse email - Tatlight'
-    message = f"""
-    Bonjour {user.first_name or user.email},
-    
-    Voici un nouveau lien pour vérifier votre adresse email :
-    {verify_link}
-    
-    Ce lien est valable pendant 24 heures.
-    
-    L'équipe Tatlight
-    """
+    # Message générique pour éviter l'énumération de comptes
+    if user is not None and not user.is_verified:
+        send_verification_email(user)
 
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
-
-    return Response({'message': 'Email de vérification renvoyé.'}, status=status.HTTP_200_OK)
+    return Response({
+        'message': 'Si votre compte existe et n\'est pas vérifié, un email de vérification a été renvoyé.'
+    }, status=status.HTTP_200_OK)
 
 
 class AdminUserListView(generics.ListAPIView):

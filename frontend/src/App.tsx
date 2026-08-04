@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './hooks/useAuth'
 import { CartProvider } from './hooks/useCart'
@@ -13,12 +13,23 @@ import PaymentReturn from '@/pages/PaymentReturn'
 import Dashboard from '@/pages/Dashboard'
 import Admin from '@/pages/Admin'
 import Auth from '@/pages/Auth'
+import VerifyEmail from '@/pages/VerifyEmail'
+import ResetPasswordConfirm from '@/pages/ResetPasswordConfirm'
 import About from '@/pages/About'
 import Offline from '@/pages/Offline'
 import Cart from '@/pages/Cart'
 import Privacy from '@/pages/Privacy'
 import Terms from '@/pages/Terms'
 import Security from '@/pages/Security'
+
+function SlashNormalizer() {
+  const location = useLocation()
+  if (location.pathname.includes('//')) {
+    const clean = location.pathname.replace(/\/+/g, '/')
+    return <Navigate to={`${clean}${location.search}${location.hash}`} replace />
+  }
+  return <Navigate to="/" replace />
+}
 
 function App() {
   return (
@@ -34,7 +45,7 @@ function App() {
                 color: '#1a1a1a',
                 border: '1px solid rgba(212, 175, 55, 0.3)',
               },
-              success: { iconTheme: { primary: '#D4AF37', secondary: '#fff' } },
+              success: { iconTheme: { primary: '#C9A227', secondary: '#fff' } },
             }}
           />
           <Header />
@@ -50,12 +61,15 @@ function App() {
               <Route path="/connexion" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/register" element={<Auth />} />
+              <Route path="/verify-email/:uid/:token" element={<VerifyEmail />} />
+              <Route path="/reset-password/:uid/:token" element={<ResetPasswordConfirm />} />
               <Route path="/a-propos" element={<About />} />
               <Route path="/panier" element={<Cart />} />
               <Route path="/hors-connexion" element={<Offline />} />
               <Route path="/confidentialite" element={<Privacy />} />
               <Route path="/conditions" element={<Terms />} />
               <Route path="/securite" element={<Security />} />
+              <Route path="*" element={<SlashNormalizer />} />
             </Routes>
           </main>
           <Footer />

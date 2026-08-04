@@ -2,31 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  font-family: 'Poppins', sans-serif;
-}
+@layer base {
+  * {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
 
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #ffffff;
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+  }
+
+  h1, h2 {
+    font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
 }
 
 @layer utilities {
+  .font-display {
+    font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  }
+
   .text-gold {
-    color: #D4AF37;
+    color: #C9A227;
   }
   
   .bg-gold {
-    background-color: #D4AF37;
+    background-color: #C9A227;
   }
   
   .border-gold {
-    border-color: #D4AF37;
+    border-color: #C9A227;
   }
   
   .bg-night {
     background-color: #0D1B2A;
+  }
+  
+  .bg-ivory {
+    background-color: #FBF7EF;
   }
   
   .bg-light-card {
@@ -37,15 +53,58 @@ body {
     color: #0D1B2A;
   }
   
+  .text-gold-dark {
+    color: #A07C12;
+  }
+  
   .glow-gold {
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
   }
   
   .glow-gold-strong {
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 30px rgba(201, 162, 39, 0.5);
   }
 
   .glow-gold-subtle {
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+    box-shadow: 0 0 15px rgba(201, 162, 39, 0.15);
   }
+
+  .eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #A07C12;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.check-draw {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: check-draw 0.4s ease-out 0.2s forwards;
 }

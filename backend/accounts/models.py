@@ -81,6 +81,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True, verbose_name='Actif')
     is_staff = models.BooleanField(default=False, verbose_name='Staff')
     is_verified = models.BooleanField(default=False, verbose_name='Email vérifié')
+    welcome_email_sent = models.BooleanField(default=False, verbose_name='Email de bienvenue envoyé')
     date_joined = models.DateTimeField(default=timezone.now, verbose_name='Date d\'inscription')
     last_login = models.DateTimeField(null=True, blank=True, verbose_name='Dernière connexion')
     

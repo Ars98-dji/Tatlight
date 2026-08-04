@@ -100,7 +100,6 @@ class CategoryAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAdminUser]
-    lookup_field = 'slug'
 
 
 class ProductAdminListView(generics.ListCreateAPIView):

@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject|default:"Tatlight" }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8f7f2;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #0D1B2A;
+        }
+        .container {
+            max-width: 600px;
+            margin: 24px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .header {
+            background: linear-gradient(135deg, #C9A227, #A07C12);
+            padding: 24px 32px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #0D1B2A;
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 1px;
+        }
+        .body {
+            padding: 32px;
+            line-height: 1.6;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #C9A227, #A07C12);
+            color: #0D1B2A !important;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 16px 0;
+        }
+        .footer {
+            background: #f4f4f5;
+            padding: 16px 32px;
+            text-align: center;
+            font-size: 12px;
+            color: #71717a;
+        }
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        table.items th {
+            color: #C9A227;
+        }
+        table.items th,
+        table.items td {
+            padding: 10px;
+            border-bottom: 1px solid #f0e6c8;
+            text-align: left;
+            font-size: 14px;
+        }
+        .total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            color: #C9A227;
+        }
+        .muted {
+            color: #71717a;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TATLIGHT</h1>
+        </div>
+        <div class="body">
+            {% block content %}{% endblock %}
+        </div>
+        <div class="footer">
+            <p>© {% now "Y" %} Tatlight — Contenus digitaux premium.</p>
+            <p>Cet email vous a été envoyé automatiquement. Merci de ne pas y répondre.</p>
+        </div>
+    </div>
+</body>
+</html>

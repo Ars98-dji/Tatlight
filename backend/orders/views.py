@@ -4,6 +4,7 @@ import json
 
 import stripe
 from django.conf import settings
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, generics, permissions, filters
 from rest_framework.decorators import api_view, permission_classes
@@ -19,8 +20,48 @@ from .serializers import (
 from products.models import Product
 from accounts.models import User
 from loyalty.models import LoyaltyTransaction
+from tatlight.emails import send_order_confirmation_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+def complete_order(order):
+    """Marque une commande comme payée et applique les effets (une seule fois).
+
+    Gère les statistiques de ventes, l'usage du coupon, l'email de
+    confirmation et les points de fidélité. N'est appelé qu'au moment où le
+    paiement est effectivement confirmé, jamais à la création de la commande.
+    """
+    if order.status == 'completed':
+        return False
+
+    order.status = 'completed'
+    order.save(update_fields=['status'])
+
+    for item in order.items.select_related('product'):
+        product = item.product
+        if product:
+            product.sales_count += item.quantity
+            product.save(update_fields=['sales_count'])
+
+    if order.coupon:
+        order.coupon.used_count += 1
+        order.coupon.save(update_fields=['used_count'])
+
+    send_order_confirmation_email(order)
+
+    user = order.user
+    if user:
+        points = int(order.total_amount * 10)
+        user.add_loyalty_points(points)
+        LoyaltyTransaction.objects.create(
+            user=user,
+            points=points,
+            transaction_type='earned',
+            description=f'Points pour la commande {order.order_number}',
+            reference=order.order_number,
+        )
+    return True
 
 
 class OrderListView(generics.ListAPIView):
@@ -96,13 +137,6 @@ class CreateOrderView(APIView):
 
         for item in order_items:
             OrderItem.objects.create(order=order, **item)
-            product = item['product']
-            product.sales_count += item['quantity']
-            product.save(update_fields=['sales_count'])
-
-        if coupon:
-            coupon.used_count += 1
-            coupon.save(update_fields=['used_count'])
 
         try:
             intent = stripe.PaymentIntent.create(
@@ -142,21 +176,7 @@ class ConfirmPaymentView(APIView):
             intent = stripe.PaymentIntent.retrieve(payment_intent_id)
             if intent.status == 'succeeded':
                 order = get_object_or_404(Order, stripe_payment_intent_id=payment_intent_id)
-                order.status = 'completed'
-                order.save(update_fields=['status'])
-
-                user = order.user
-                points = int(order.total_amount * 10)
-                user.add_loyalty_points(points)
-
-                from loyalty.models import LoyaltyTransaction
-                LoyaltyTransaction.objects.create(
-                    user=user,
-                    points=points,
-                    transaction_type='earned',
-                    description=f'Points pour la commande {order.order_number}',
-                    reference=order.order_number,
-                )
+                complete_order(order)
 
                 return Response({
                     'message': 'Paiement confirmé avec succès !',
@@ -191,7 +211,12 @@ class GuestCheckoutView(APIView):
         for item_data in items_data:
             product_id = item_data.get('product_id')
             product = get_object_or_404(Product, id=product_id, is_active=True)
-            quantity = item_data.get('quantity', 1)
+            try:
+                quantity = int(item_data.get('quantity', 1))
+            except (TypeError, ValueError):
+                return Response({'error': 'Quantité invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+            if quantity < 1 or quantity > 99:
+                return Response({'error': 'Quantité invalide.'}, status=status.HTTP_400_BAD_REQUEST)
             price = product.price
             subtotal = price * quantity
             total += subtotal
@@ -210,9 +235,6 @@ class GuestCheckoutView(APIView):
 
         for item in order_items:
             OrderItem.objects.create(order=order, **item)
-            product = item['product']
-            product.sales_count += item['quantity']
-            product.save(update_fields=['sales_count'])
 
         try:
             intent = stripe.PaymentIntent.create(
@@ -262,21 +284,7 @@ def stripe_webhook(request):
         payment_intent_id = intent['id']
         try:
             order = Order.objects.get(stripe_payment_intent_id=payment_intent_id)
-            if order.status != 'completed':
-                order.status = 'completed'
-                order.save(update_fields=['status'])
-
-                user = order.user
-                if user:
-                    points = int(order.total_amount * 10)
-                    user.add_loyalty_points(points)
-                    LoyaltyTransaction.objects.create(
-                        user=user,
-                        points=points,
-                        transaction_type='earned',
-                        description=f'Points pour la commande {order.order_number}',
-                        reference=order.order_number,
-                    )
+            complete_order(order)
         except Order.DoesNotExist:
             pass
 
@@ -350,15 +358,8 @@ class FlutterwaveInitializeView(APIView):
 
         for item in order_items:
             OrderItem.objects.create(order=order, **item)
-            product = item['product']
-            product.sales_count += item['quantity']
-            product.save(update_fields=['sales_count'])
 
-        if coupon:
-            coupon.used_count += 1
-            coupon.save(update_fields=['used_count'])
-
-        callback_url = f"{settings.FRONTEND_URL}/paiement/retour?order_id={order.id}"
+        callback_url = f"{settings.FRONTEND_URL.rstrip('/')}/paiement/retour?order_id={order.id}"
         result = initialize_payment(order, callback_url)
 
         if result.get('status') == 'success':
@@ -398,23 +399,22 @@ class FlutterwaveVerifyView(APIView):
             return Response({'error': 'ID de transaction requis.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if result.get('status') == 'success' and result['data'].get('status') == 'successful':
-            if order.status != 'completed':
-                order.status = 'completed'
-                order.flutterwave_transaction_id = str(transaction_id)
-                order.save(update_fields=['status', 'flutterwave_transaction_id'])
+            tx_data = result['data']
 
-                user = order.user
-                if user:
-                    points = int(order.total_amount * 10)
-                    user.add_loyalty_points(points)
-                    from loyalty.models import LoyaltyTransaction
-                    LoyaltyTransaction.objects.create(
-                        user=user,
-                        points=points,
-                        transaction_type='earned',
-                        description=f'Points pour la commande {order.order_number}',
-                        reference=order.order_number,
-                    )
+            if tx_data.get('tx_ref') != order.order_number:
+                return Response({
+                    'error': 'La transaction ne correspond pas à cette commande.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if float(tx_data.get('amount', 0) or 0) < float(order.total_amount):
+                return Response({
+                    'error': 'Le montant de la transaction est invalide.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if order.status != 'completed':
+                order.flutterwave_transaction_id = str(transaction_id)
+                order.save(update_fields=['flutterwave_transaction_id'])
+                complete_order(order)
 
             return Response({
                 'message': 'Paiement confirmé avec succès !',
@@ -430,11 +430,12 @@ class FlutterwaveVerifyView(APIView):
 @permission_classes([permissions.AllowAny])
 def flutterwave_webhook(request):
     secret_hash = settings.FLUTTERWAVE_WEBHOOK_SECRET
-    if secret_hash:
-        signature = request.META.get('HTTP_VERIF_HASH', '')
-        computed = hashlib.sha256(secret_hash.encode()).hexdigest()
-        if signature != computed:
-            return Response({'error': 'Signature invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not secret_hash:
+        return Response({'error': 'Webhook secret non configuré.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    signature = request.META.get('HTTP_VERIF_HASH', '')
+    if signature != secret_hash:
+        return Response({'error': 'Signature invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
     payload = json.loads(request.body)
     event_type = payload.get('event')
@@ -445,23 +446,14 @@ def flutterwave_webhook(request):
         transaction_id = data.get('id')
         try:
             order = Order.objects.get(order_number=tx_ref)
-            if order.status != 'completed':
-                order.status = 'completed'
-                order.flutterwave_transaction_id = str(transaction_id)
-                order.save(update_fields=['status', 'flutterwave_transaction_id'])
 
-                user = order.user
-                if user:
-                    points = int(order.total_amount * 10)
-                    user.add_loyalty_points(points)
-                    from loyalty.models import LoyaltyTransaction
-                    LoyaltyTransaction.objects.create(
-                        user=user,
-                        points=points,
-                        transaction_type='earned',
-                        description=f'Points pour la commande {order.order_number}',
-                        reference=order.order_number,
-                    )
+            if float(data.get('amount', 0) or 0) < float(order.total_amount):
+                return Response({'error': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if order.status != 'completed':
+                order.flutterwave_transaction_id = str(transaction_id)
+                order.save(update_fields=['flutterwave_transaction_id'])
+                complete_order(order)
         except Order.DoesNotExist:
             pass
 
@@ -551,10 +543,47 @@ def user_purchases(request):
                     'product_image': item.product.image.url if item.product.image else None,
                     'price': float(item.product_price),
                     'purchased_at': order.created_at,
-                    'download_url': item.product.file.url if item.product.file and item.product.is_digital else None,
+                    # Le fichier n'est jamais exposé directement : il passe par
+                    # l'endpoint authentifié /purchases/<id>/download/
+                    'is_downloadable': bool(item.product.file and item.product.is_digital),
                 })
 
     return Response({'purchases': purchases})
+
+
+class ProductDownloadView(APIView):
+    """Téléchargement protégé des produits digitaux.
+
+    Seul un utilisateur authentifié (email vérifié) ayant payé la commande
+    correspondante peut télécharger le fichier.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id)
+
+        if not product.is_digital or not product.file:
+            return Response({
+                'error': 'Aucun fichier disponible pour ce produit.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        has_purchase = Order.objects.filter(
+            user=request.user,
+            status='completed',
+            items__product=product,
+        ).exists()
+
+        if not has_purchase:
+            return Response({
+                'error': 'Vous devez acheter ce produit avant de le télécharger.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        return FileResponse(
+            product.file.open('rb'),
+            as_attachment=True,
+            filename=product.file.name.split('/')[-1],
+        )
 
 
 class FedaPayInitializeView(APIView):
@@ -618,19 +647,12 @@ class FedaPayInitializeView(APIView):
 
         for item in order_items:
             OrderItem.objects.create(order=order, **item)
-            product = item['product']
-            product.sales_count += item['quantity']
-            product.save(update_fields=['sales_count'])
-
-        if coupon:
-            coupon.used_count += 1
-            coupon.save(update_fields=['used_count'])
 
         amount_xof = int(float(total) * 655.957)
         if amount_xof < 1:
             amount_xof = 1
 
-        callback_url = f"{settings.FRONTEND_URL}/paiement/retour"
+        callback_url = f"{settings.FRONTEND_URL.rstrip('/')}/paiement/retour"
         status_code, result = create_transaction(
             amount_xof=amount_xof,
             description=f'Commande {order.order_number}',
@@ -678,22 +700,15 @@ class FedaPayVerifyView(APIView):
 
         status_code, result = verify_transaction(transaction_id)
         if status_code in (200, 201) and result.get('status') == 'approved':
-            if order.status != 'completed':
-                order.status = 'completed'
-                order.save(update_fields=['status'])
+            expected_xof = int(float(order.total_amount) * 655.957)
+            amount = result.get('amount')
+            if amount is not None and float(amount) < expected_xof:
+                return Response({
+                    'error': 'Le montant de la transaction est invalide.'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-                user = order.user
-                if user:
-                    points = int(order.total_amount * 10)
-                    user.add_loyalty_points(points)
-                    from loyalty.models import LoyaltyTransaction
-                    LoyaltyTransaction.objects.create(
-                        user=user,
-                        points=points,
-                        transaction_type='earned',
-                        description=f'Points pour la commande {order.order_number}',
-                        reference=order.order_number,
-                    )
+            if order.status != 'completed':
+                complete_order(order)
 
             return Response({
                 'message': 'Paiement confirmé avec succès !',
@@ -702,6 +717,7 @@ class FedaPayVerifyView(APIView):
 
         return Response({
             'error': 'Le paiement n\'a pas été confirmé.',
+            'status': result.get('status', 'unknown'),
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -715,11 +731,12 @@ def fedapay_webhook(request):
     signature = request.headers.get('X-FEDAPAY-SIGNATURE', '')
 
     webhook_secret = settings.FEDAPAY_WEBHOOK_SECRET
-    if webhook_secret:
-        import hmac
-        expected = hmac.new(webhook_secret.encode(), payload, hashlib.sha256).hexdigest()
-        if signature != expected:
-            return Response({'error': 'Signature invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not webhook_secret:
+        return Response({'error': 'Webhook secret non configuré.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    expected = hmac.new(webhook_secret.encode(), payload, hashlib.sha256).hexdigest()
+    if signature != expected:
+        return Response({'error': 'Signature invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         event = json.loads(payload)
@@ -739,21 +756,12 @@ def fedapay_webhook(request):
                 except Order.DoesNotExist:
                     return Response({'error': 'Commande introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
-                if order.status != 'completed':
-                    order.status = 'completed'
-                    order.save(update_fields=['status'])
+                expected_xof = int(float(order.total_amount) * 655.957)
+                amount = result.get('amount')
+                if amount is not None and float(amount) < expected_xof:
+                    return Response({'error': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
-                    user = order.user
-                    if user:
-                        points = int(order.total_amount * 10)
-                        user.add_loyalty_points(points)
-                        from loyalty.models import LoyaltyTransaction
-                        LoyaltyTransaction.objects.create(
-                            user=user,
-                            points=points,
-                            transaction_type='earned',
-                            description=f'Points pour la commande {order.order_number}',
-                            reference=order.order_number,
-                        )
+                if order.status != 'completed':
+                    complete_order(order)
 
     return Response({'received': True})
