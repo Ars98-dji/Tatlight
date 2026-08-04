@@ -58,6 +58,46 @@ export default function About() {
           </section>
 
           <section className="bg-white rounded-3xl p-8 md:p-10 border border-[#C9A227]/20 glow-gold-subtle">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-[#0D1B2A] mb-3">Notre Histoire</h2>
+            <div className="w-12 h-[3px] bg-[#C9A227] rounded-full mb-6"></div>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Née à Cotonou, au Bénin, Tatlight est la réponse à une conviction simple : les talents qui
+              nous entourent méritent mieux que des contenus génériques. Chaque ebook, template ou formation
+              est sélectionné et vérifié à la main pour offrir un niveau d'exigence que l'on trouve rarement ailleurs.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              Depuis notre lancement, nous accompagnons des créateurs, des entrepreneurs et des apprenants dans
+              leur montée en compétence — avec la même exigence de qualité à chaque étape de leur parcours.
+            </p>
+          </section>
+
+          <section className="bg-white rounded-3xl p-8 md:p-10 border border-[#C9A227]/20 glow-gold-subtle">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-[#0D1B2A] mb-3">Pourquoi nous choisir</h2>
+            <div className="w-12 h-[3px] bg-[#C9A227] rounded-full mb-6"></div>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Nous pensons qu'un achat en ligne doit être simple, sûr et immédiat. C'est pourquoi :
+            </p>
+            <ul className="list-disc pl-6 text-gray-600 space-y-2 leading-relaxed">
+              <li>Téléchargement immédiat après paiement, 24h/24 et 7j/7</li>
+              <li>Paiements 100% sécurisés via Stripe, Flutterwave et FedaPay</li>
+              <li>Contenus vérifiés et soigneusement sélectionnés avant publication</li>
+              <li>Vos fichiers accessibles à vie depuis votre espace membre</li>
+              <li>Support réactif par email et WhatsApp</li>
+            </ul>
+          </section>
+
+          <section className="bg-white rounded-3xl p-8 md:p-10 border border-[#C9A227]/20 glow-gold-subtle">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-[#0D1B2A] mb-3">Nos Engagements</h2>
+            <div className="w-12 h-[3px] bg-[#C9A227] rounded-full mb-6"></div>
+            <ul className="list-disc pl-6 text-gray-600 space-y-2 leading-relaxed">
+              <li><strong className="text-[#0D1B2A]">Qualité premium</strong> : chaque contenu passe une vérification stricte avant publication</li>
+              <li><strong className="text-[#0D1B2A]">Transparence</strong> : des prix clairs, sans frais cachés</li>
+              <li><strong className="text-[#0D1B2A]">Communauté</strong> : une équipe à l'écoute, engagée à vos côtés</li>
+              <li><strong className="text-[#0D1B2A]">Accessibilité</strong> : des contenus digitaux pensés pour tous les budgets et tous les niveaux</li>
+            </ul>
+          </section>
+
+          <section className="bg-white rounded-3xl p-8 md:p-10 border border-[#C9A227]/20 glow-gold-subtle">
             <h2 className="font-display text-2xl md:text-3xl font-bold text-[#0D1B2A] mb-3">Contactez-nous</h2>
             <div className="w-12 h-[3px] bg-[#C9A227] rounded-full mb-6"></div>
             <div className="space-y-4">

@@ -5,7 +5,7 @@ import { FaWhatsapp, FaTiktok, FaInstagram } from 'react-icons/fa6'
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0D1B2A] border-t border-[#C9A227]/20 mt-20">
+    <footer className="bg-[#0D1B2A] border-t border-[#C9A227]/20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Logo & Description */}
